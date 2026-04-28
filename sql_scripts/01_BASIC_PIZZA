@@ -1,0 +1,74 @@
+/*
+===========================================================================
+BASIC SQL QUERIES: CORE SALES METRICS
+Description: Initial exploration of the dataset to find totals and counts.
+===========================================================================
+*/
+
+-- Retrieve the total number of orders placed.
+-- This helps us understand the volume of traffic in the dataset.
+SELECT 
+       COUNT(*) AS TOTAL_ORDER_PLACED
+FROM ORDERS;
+
+-- ---------------------------------------------------------
+
+-- Calculate the total revenue generated from pizza sales.
+-- Uses a JOIN to multiply quantity by the specific unit price.
+SELECT 
+      ROUND(SUM(PRICE*QUANTITY),2) AS TOTAL_REVENUE
+      FROM order_details AS O JOIN pizzas AS P
+      USING(pizza_id);
+
+-- ---------------------------------------------------------
+
+-- Identify the highest-priced pizza.
+-- Uses a RANK() Window Function to handle potential price ties.
+WITH CTE AS
+(
+    SELECT
+          *,
+          RANK() OVER(ORDER BY PRICE DESC) AS RNK
+         FROM pizzas AS P LEFT JOIN pizza_types AS PT
+         USING(pizza_type_id)
+)
+SELECT 
+      NAME,
+      SIZE,
+      PRICE 
+FROM CTE
+WHERE RNK =1;
+
+-- ---------------------------------------------------------
+
+-- Identify the most common pizza size ordered.
+-- First calculates counts per size, then filters for the maximum value.
+WITH CTE AS
+(
+SELECT 
+       SIZE,
+       COUNT(*) AS CNT
+FROM pizzas AS PT JOIN order_details AS O
+USING(pizza_id)
+GROUP BY 1
+)
+SELECT 
+	*
+FROM CTE 
+WHERE CNT = ( SELECT MAX(CNT) FROM CTE);
+       
+-- ---------------------------------------------------------
+
+-- List the top 5 most ordered pizza NAMES along with their quantities.
+-- Uses DENSE_RANK() to provide a top-5 ranking based on total quantity.
+WITH CTE AS
+(
+SELECT 
+       NAME,
+       SUM(QUANTITY) AS CNT,
+      dense_rank() OVER(ORDER BY SUM(QUANTITY) DESC) AS RNK
+FROM pizzas P JOIN pizza_types AS PT ON P.pizza_type_id=PT.pizza_type_id JOIN order_details AS O 
+USING(pizza_id)
+GROUP BY 1
+)
+SELECT * FROM CTE WHERE RNK <6;
