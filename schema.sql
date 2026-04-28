@@ -1,0 +1,48 @@
+-- ============================================================
+-- DATABASE SCHEMA FOR PIZZA SALES ANALYSIS
+-- Description: This script creates the relational structure for 
+--              the Pizza Hut sales dataset.
+-- ============================================================
+
+-- 1. Create 'pizza_types' Table
+-- This table stores the descriptive master data for each pizza flavor.
+CREATE TABLE pizza_types (
+    pizza_type_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    ingredients TEXT NOT NULL,
+    PRIMARY KEY (pizza_type_id(50)) -- Note: Specified length for indexing text types
+);
+
+-- 2. Create 'pizzas' Table
+-- Links to pizza_types and defines the specific size and price for each variant.
+CREATE TABLE pizzas (
+    pizza_id TEXT NOT NULL,
+    pizza_type_id TEXT NOT NULL,
+    size TEXT NOT NULL,
+    price DOUBLE NOT NULL,
+    PRIMARY KEY (pizza_id(50))
+);
+
+-- 3. Create 'orders' Table
+-- Captures the timestamp (date and time) for every unique transaction.
+CREATE TABLE orders (
+    order_id INT NOT NULL,
+    date DATE NOT NULL,
+    time TIME NOT NULL,
+    PRIMARY KEY (order_id)
+);
+
+-- 4. Create 'order_details' Table
+-- The transactional bridge that connects orders to specific pizzas and quantities.
+CREATE TABLE order_details (
+    order_details_id INT NOT NULL,
+    order_id INT NOT NULL,
+    pizza_id VARCHAR(50) NOT NULL,
+    quantity INT NOT NULL,
+    PRIMARY KEY (order_details_id)
+);
+
+-- ============================================================
+-- END OF SCHEMA SCRIPT
+-- ============================================================
