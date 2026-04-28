@@ -1,0 +1,64 @@
+===========================================================================
+ADVANCED SQL QUERIES: COMPLEX ANALYTICS
+Description: Mastery of window functions, subqueries, and running totals.
+===========================================================================
+
+-- Calculate the percentage contribution of each pizza CATEGORY to total revenue.
+
+WITH CTE AS (
+SELECT 
+       CATEGORY,
+       SUM(PRICE*QUANTITY) AS TTL
+FROM pizzas AS P JOIN pizza_types AS PT
+USING(pizza_type_id) JOIN order_details AS O
+USING(pizza_id)
+GROUP BY 1
+)
+SELECT 
+       CATEGORY,
+       TTL,
+       ROUND((TTL/(SELECT SUM(TTL) FROM CTE))*100,2) AS CONTRI
+FROM CTE;
+
+-- ---------------------------------------------------------
+
+-- Analyze the cumulative revenue generated over time.
+-- Uses a Window Function (SUM() OVER) to track growth across dates.
+WITH CTE AS 
+(
+SELECT 
+       DATE,
+       SUM(PRICE*QUANTITY) AS TTL
+FROM ORDERS AS O JOIN order_details AS OD
+USING(ORDER_ID) JOIN pizzas AS P
+USING(pizza_id)
+GROUP BY 1
+)
+SELECT 
+       DATE,
+       TTL,
+       SUM(TTL) OVER(ORDER BY DATE ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS CUM_REVENUE
+FROM CTE;
+
+-- ---------------------------------------------------------
+
+-- Determine the top 3 most ordered pizza types based on revenue for each pizza category.
+-- Uses PARTITION BY to calculate independent rankings for every pizza group.
+WITH CTE AS 
+(
+SELECT 
+       CATEGORY,
+       NAME,
+       SUM(PRICE*QUANTITY) AS TTL1,
+       DENSE_RANK() OVER(PARTITION BY CATEGORY ORDER BY SUM(PRICE*QUANTITY) DESC) AS RNK
+FROM pizzas AS P JOIN pizza_types AS PT
+USING(pizza_type_id) JOIN order_details AS O
+USING(pizza_id)
+GROUP BY 1,2
+)
+SELECT 
+       CATEGORY,
+       NAME,
+       TTL1
+FROM CTE
+WHERE RNK < 4;
