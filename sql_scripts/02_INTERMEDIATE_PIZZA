@@ -1,0 +1,65 @@
+/*
+===========================================================================
+INTERMEDIATE SQL QUERIES: TRENDS & CATEGORIES
+Description: Deeper analysis focusing on categorization and time-based data.
+===========================================================================
+*/
+
+-- Join the necessary tables to find the total quantity of each pizza category ordered.
+-- Aggregates sales volume by pizza category (Classic, Veggie, etc.)
+SELECT  
+       CATEGORY,
+       SUM(QUANTITY) AS TOTAL_ORDER
+FROM pizzas AS P JOIN pizza_types AS PT
+USING(pizza_type_id) JOIN order_details AS O
+USING(pizza_id)
+GROUP BY 1;
+
+-- ---------------------------------------------------------
+
+-- Determine the distribution of orders by hour of the day.
+-- Extracts the hour from the 'time' column to visualize peak periods.
+SELECT 
+      HOUR(TIME) AS HOUR,
+      COUNT(*) AS TTL_ORDER
+FROM orders
+GROUP BY 1
+ORDER BY 1;
+
+-- ---------------------------------------------------------
+
+-- Join relevant tables to find the category-wise distribution of pizzas.
+-- Shows how many different pizza variants exist in each category.
+SELECT 
+       CATEGORY,
+       COUNT(*) AS CAT_WISE_TOT
+FROM pizza_types
+GROUP BY 1;
+
+-- ---------------------------------------------------------
+
+-- Group the orders by date and calculate the average number of pizzas ordered per day.
+-- Uses a CTE to find daily sums before calculating the overall average.
+WITH CTE AS 
+(
+SELECT 
+      DATE,
+      SUM(QUANTITY) QUN
+FROM orders O JOIN order_details OD
+USING(order_id)
+GROUP BY 1)
+SELECT AVG(QUN) AS AVG_PIZ FROM CTE;
+
+-- ---------------------------------------------------------
+
+-- Determine the top 3 most ordered pizza NAME based on revenue.
+-- Calculated by multiplying unit price by quantity sold.
+SELECT 
+       NAME,
+       SUM(QUANTITY*PRICE) AS TTL_ORD
+FROM pizzas AS P JOIN pizza_types AS PT
+USING(pizza_type_id) JOIN order_details AS O
+USING(pizza_id)
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 3;
